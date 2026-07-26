@@ -25,7 +25,7 @@ jobs:
       - name: Build
         id: build
         run: |
-          pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree patchelf strace
+          pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree patchelf strace github-cli
           rustup default stable
 
           git clone https://gitlab.com/kazamos/appgallery.git
