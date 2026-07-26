@@ -30,7 +30,7 @@ jobs:
 
       - name: Build
         run: |
-          pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree
+          pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree patchelf strace
           rustup default stable
           cargo install cargo-strip
 
