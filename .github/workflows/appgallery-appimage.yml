@@ -32,11 +32,10 @@ jobs:
         run: |
           pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree patchelf strace
           rustup default stable
-          cargo install cargo-strip
 
           git clone https://gitlab.com/kazamos/appgallery.git
           cd appgallery
-          cargo build --release && cargo strip
+          cargo build --release
           ./install.sh
           ./anylinux_appimage
           rm -rf target
