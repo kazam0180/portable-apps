@@ -40,7 +40,7 @@ jobs:
           ./install.sh
           ./anylinux_appimage
           rm -rf target
-          tree .
+          tree . -s -h
 
       # - name: Upload Compiled AppImage Artifact
       #   uses: actions/upload-artifact@v4
