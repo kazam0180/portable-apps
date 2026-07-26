@@ -40,11 +40,11 @@ jobs:
           cargo build --release
           ./install.sh
           ./anylinux_appimage
-          rm -rf target
-          tree . -s -h
+          mv dist ../
+          rm -rf appgallery
 
       - name: Upload Compiled AppImage Artifact
         uses: actions/upload-artifact@v6
         with:
           name: AppImage-${{ matrix.arch }}
-          path: ./dist/*.AppImage
+          path: ./dist/*.AppImage*
