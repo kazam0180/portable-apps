@@ -12,6 +12,9 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,46 +25,55 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
 
-      - name: Build
-        id: build
+      - name: Check if Release Already Exists
+        id: check
         run: |
-          pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree patchelf strace github-cli
-          rustup default stable
+          set -euo pipefail
+          pacman -Sy --noconfirm git github-cli
 
           git clone https://gitlab.com/kazamos/appgallery.git
+          cd appgallery
+
+          latestTag=$(git describe --tags "$(git rev-list --tags --max-count=1)" 2>/dev/null || echo "v0.0.0")
+          echo "tag=${latestTag}" >> "$GITHUB_OUTPUT"
+
+          RELEASE_TAG="appgallery-${latestTag}"
+          if gh release view "$RELEASE_TAG" --repo ${{ github.repository }} &>/dev/null; then
+            echo "Release $RELEASE_TAG already exists, skipping build"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup patchelf strace tree
+          rustup default stable
+
           cd appgallery
           cargo build --release
           ./install.sh
           ./anylinux_appimage
-           
-          export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v0.0.0")
-          echo "tag=${latestTag}" >> $GITHUB_OUTPUT
-           
+
           mv dist ../
+          cd ..
           rm -rf appgallery
 
       - name: Upload Compiled AppImage Artifact
+        if: steps.check.outputs.skip == 'false'
         uses: actions/upload-artifact@v6
         with:
           name: AppImage
           path: ./dist/*.AppImage*
 
-      - name: Check if Release Exists
-        id: release_check
-        run: |
-          RELEASE_TAG="appgallery-${{ steps.build.outputs.tag }}"
-          if gh release view "$RELEASE_TAG" &>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create Release
-        if: steps.release_check.outputs.exists == 'false'
+        if: steps.check.outputs.skip == 'false'
         run: |
-          RELEASE_TAG="appgallery-${{ steps.build.outputs.tag }}"
+          RELEASE_TAG="appgallery-${{ steps.check.outputs.tag }}"
           gh release create "$RELEASE_TAG" \
             ./dist/*.AppImage \
             ./dist/*.zsync \
