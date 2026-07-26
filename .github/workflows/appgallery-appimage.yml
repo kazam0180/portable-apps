@@ -14,15 +14,7 @@ concurrency:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x86_64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-latest
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/pkgforge-dev/archlinux:latest
 
@@ -46,5 +38,5 @@ jobs:
       - name: Upload Compiled AppImage Artifact
         uses: actions/upload-artifact@v6
         with:
-          name: AppImage-${{ matrix.arch }}
+          name: AppImage
           path: ./dist/*.AppImage*
