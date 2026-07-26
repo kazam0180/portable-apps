@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build
+        id: build
         run: |
           pacman -Syu --noconfirm base-devel wget gtk4 polkit rustup git tree patchelf strace
           rustup default stable
@@ -32,6 +33,10 @@ jobs:
           cargo build --release
           ./install.sh
           ./anylinux_appimage
+           
+          export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v0.0.0")
+          echo "tag=${latestTag}" >> $GITHUB_OUTPUT
+           
           mv dist ../
           rm -rf appgallery
 
@@ -40,3 +45,27 @@ jobs:
         with:
           name: AppImage
           path: ./dist/*.AppImage*
+
+      - name: Check if Release Exists
+        id: release_check
+        run: |
+          RELEASE_TAG="appgallery-${{ steps.build.outputs.tag }}"
+          if gh release view "$RELEASE_TAG" &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        if: steps.release_check.outputs.exists == 'false'
+        run: |
+          RELEASE_TAG="appgallery-${{ steps.build.outputs.tag }}"
+          gh release create "$RELEASE_TAG" \
+            ./dist/*.AppImage \
+            ./dist/*.zsync \
+            --generate-notes \
+            --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
