@@ -20,13 +20,15 @@ jobs:
         include:
           - arch: x86_64
             runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-latest
     runs-on: ${{ matrix.runner }}
     container:
       image: ghcr.io/pkgforge-dev/archlinux:latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build
         run: |
@@ -41,8 +43,8 @@ jobs:
           rm -rf target
           tree . -s -h
 
-      # - name: Upload Compiled AppImage Artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: AppImage-${{ matrix.arch }}
-      #     path: ./dist/*.AppImage
+      - name: Upload Compiled AppImage Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: AppImage-${{ matrix.arch }}
+          path: ./dist/*.AppImage
