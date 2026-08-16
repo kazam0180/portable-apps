@@ -1,0 +1,70 @@
+name: Build pla-site-tool
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/pkgforge-dev/archlinux:latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Build
+        id: build
+        run: |
+          pacman -Syu --noconfirm base-devel wget rustup git tree patchelf strace xorg-server-xvfb github-cli
+          rustup default stable
+
+          git clone https://gitlab.com/kazamos/pla-site-tool.git
+          cd pla-site-tool
+          cargo build --target x86_64-unknown-linux-musl --release
+          cp target/x86_64-unknown-linux-musl/release/pla-site-tool /usr/bin/
+          ./anylinux_appimage
+
+          export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v0.0.0")
+          echo "tag=${latestTag}" >> $GITHUB_OUTPUT
+           
+          mv dist ../
+          rm -rf pla-site-tool
+
+      - name: Upload Compiled AppImage Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: AppImage
+          path: ./dist/*.AppImage*
+
+      - name: Check if Release Exists
+        id: release_check
+        run: |
+          RELEASE_TAG="appgallery-${{ steps.build.outputs.tag }}"
+          if gh release view "$RELEASE_TAG" &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        if: steps.release_check.outputs.exists == 'false'
+        run: |
+          RELEASE_TAG="pla-site-tool-${{ steps.build.outputs.tag }}"
+          gh release create "$RELEASE_TAG" \
+            ./dist/*.AppImage \
+            ./dist/*.zsync \
+            --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
