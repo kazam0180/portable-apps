@@ -34,6 +34,9 @@ jobs:
           cargo build --target x86_64-unknown-linux-musl --release
           cp target/x86_64-unknown-linux-musl/release/pla-site-tool /usr/bin/
           sed -i 's|--prefer-nano|--add-common --prefer-nano|g' anylinux_appimage
+          mkdir -p AppDir
+          echo -e "[Desktop Entry]\nHidden=false\nTryExec=xfce4-clipman\nExec=xfce4-clipman" > AppDir/pla-site-tool.desktop
+
           ./anylinux_appimage
 
           export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v0.0.0")
