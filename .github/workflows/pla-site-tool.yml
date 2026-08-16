@@ -29,7 +29,7 @@ jobs:
           rustup default stable
           rustup target add x86_64-unknown-linux-musl
 
-          git clone https://gitlab.com/kazam/pla-site-tool.git
+          git clone https://gitlab.com/kazam0180/pla-site-tool.git
           cd pla-site-tool
           cargo build --target x86_64-unknown-linux-musl --release
           cp target/x86_64-unknown-linux-musl/release/pla-site-tool /usr/bin/
