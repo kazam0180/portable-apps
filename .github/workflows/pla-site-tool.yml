@@ -37,6 +37,7 @@ jobs:
           mkdir -p AppDir
           export DESKTOP=DUMMY
           export ICON=DUMMY
+          export MAIN_BIN=/usr/bin/pla-site-tool
           ./anylinux_appimage
 
           export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v0.0.0")
