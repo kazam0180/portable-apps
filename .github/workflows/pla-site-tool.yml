@@ -36,8 +36,7 @@ jobs:
           cd pla-site-tool
           cargo build --target x86_64-unknown-linux-musl --release
           cp target/x86_64-unknown-linux-musl/release/pla-site-tool /usr/bin/
-          sed -i 's|--prefer-nano|--add-common --prefer-nano|g' anylinux_appimage
-          sed -i 's|--make-appimage|--make-static-bin|g' anylinux_appimage
+          sed -i 's|get-debloated-pkgs.sh --prefer-nano|get-debloated-pkgs.sh --add-common --prefer-nano|g' anylinux_appimage
           mkdir -p AppDir
           export DESKTOP=DUMMY
           export ICON=DUMMY
