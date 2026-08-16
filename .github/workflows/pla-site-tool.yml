@@ -26,6 +26,7 @@ jobs:
         id: build
         run: |
           pacman -Syu --noconfirm base-devel wget rustup git tree patchelf strace musl github-cli
+          rustup default stable
           rustup target add x86_64-unknown-linux-musl
 
           git clone https://gitlab.com/kazamos/pla-site-tool.git
