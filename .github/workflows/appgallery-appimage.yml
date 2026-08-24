@@ -1,11 +1,6 @@
 name: Build GTK4 Anylinux AppImage
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
   workflow_dispatch:
 
 concurrency:
@@ -56,11 +51,10 @@ jobs:
 
           cd appgallery
           cargo build --release
-          ./install.sh
-          ./anylinux_appimage
+          ./packaging/install.sh
 
-          mv dist ../
           cd ..
+          .github/scripts/anylinux_appimage
           rm -rf appgallery
 
       - name: Upload Compiled AppImage Artifact

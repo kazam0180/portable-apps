@@ -1,0 +1,27 @@
+#!/bin/sh
+
+_install_to_usr_local() (
+	rule_src=$APPDIR/share/polkit-1/actions/io.gitlab.kazamos.appgallery.policy
+	rule_dst=/usr/local/share/polkit-1/actions/io.gitlab.kazamos.appgallery.policy
+
+	# for some reason we get permission denied error if we try to copy
+	# directly to the destination, so instead we have to fisrt copy to
+	# XDG_CACHE_HOME and then to the destination lol
+	tmpdir=${XDG_CACHE_HOME:-$HOME/.cache}/appgallery-appimage
+
+	if [ ! -f "$rule_dst" ]; then
+		# remove anything funny that could be there
+		rm -rf "$tmpdir"
+		mkdir -p "$tmpdir"
+		cp -v "$rule_src"    "$tmpdir"
+
+		if notify -dq "We need permission to create '$rule_dst'"; then
+			run_gui_sudo /bin/sh -c "
+			  mkdir -p /usr/local/sbin /usr/local/share/polkit-1/actions
+			  cp -v \"$tmpdir\"/io.gitlab.kazamos.appgallery.policy \"$rule_dst\"
+			"
+		fi
+	fi
+)
+
+_install_to_usr_local || :

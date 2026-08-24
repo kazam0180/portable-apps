@@ -1,0 +1,51 @@
+#!/bin/sh
+set -eux
+
+# Detect host hardware architecture
+ARCH="$(uname -m)"
+
+# Source URLs for Anylinux packaging tools
+QUICK_SHARUN_URL="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/quick-sharun.sh"
+DEBLOAT_URL="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/get-debloated-pkgs.sh"
+
+# Fetch build helpers
+wget "$DEBLOAT_URL" -O ./get-debloated-pkgs.sh
+chmod +x ./get-debloated-pkgs.sh
+
+wget "$QUICK_SHARUN_URL" -O ./quick-sharun
+chmod +x ./quick-sharun
+
+./get-debloated-pkgs.sh --add-common --prefer-nano
+
+# Environment Configuration
+
+export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1))
+git checkout $latestTag
+
+export APPDIR="$PWD/AppDir"
+export ICON="/usr/share/icons/hicolor/scalable/apps/io.gitlab.kazamos.appgallery.svg"
+export DESKTOP="/usr/share/applications/io.gitlab.kazamos.appgallery.desktop"
+export OUTPATH="./dist"
+export OUTNAME="AppGallery_${latestTag}-${ARCH}.AppImage"
+
+# Enable Framework Flags
+export DEPLOY_OPENGL=1
+#export DEPLOY_VULKAN=1
+export STARTUPWMCLASS=io.gitlab.kazamos.appgallery
+export GTK_CLASS_FIX=1
+export ANYLINUX_LIB=1
+export DEPLOY_LOCALE=1
+export STRACE_MODE=1
+
+mkdir -p ./AppDir/bin
+cp -v .github/scripts/appimage_policy_installer.src.hook ./AppDir/bin
+
+# Deploy binaries and capture dynamic dependencies
+./quick-sharun /usr/bin/appgallery /usr/bin/appgallery-helper
+
+dst=./AppDir/share/polkit-1/actions
+mkdir -p "$dst"
+cp -v /usr/share/polkit-1/actions/io.gitlab.kazamos.appgallery.policy "$dst"
+
+# Compile final AppImage using DwarFS and uruntime
+./quick-sharun --make-appimage
