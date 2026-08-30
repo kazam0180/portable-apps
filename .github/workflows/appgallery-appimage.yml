@@ -52,9 +52,8 @@ jobs:
           cd appgallery
           cargo build --release
           ./packaging/install.sh
-
+          ../.github/scripts/anylinux_appimage
           cd ..
-          .github/scripts/anylinux_appimage
           rm -rf appgallery
 
       - name: Upload Compiled AppImage Artifact

@@ -1,0 +1,67 @@
+name: Shattered Pixel Dungeon AppImage
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build Shattered Pixel Dungeon AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Clone upstream Shattered Pixel Dungeon
+        run: |
+          git clone --depth 1 https://github.com/00-Evan/shattered-pixel-dungeon.git upstream
+          cd upstream
+          git fetch --tags --depth 1
+          LATEST_TAG=$(git describe --tags "$(git rev-list --tags --max-count=1)" 2>/dev/null || git rev-parse HEAD)
+          echo "Latest tag: $LATEST_TAG"
+          git checkout "$LATEST_TAG"
+          echo "VERSION=$(sed -n "s/^[[:space:]]*appVersionName[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" build.gradle)" >> "$GITHUB_ENV"
+          echo "TAG_NAME=$LATEST_TAG" >> "$GITHUB_ENV"
+
+      - name: Verify version
+        run: |
+          echo "Building Shattered Pixel Dungeon version: $VERSION"
+          echo "Tag: $TAG_NAME"
+
+      - name: Build Linux desktop release JAR
+        working-directory: upstream
+        run: ./gradlew :desktop:release --no-daemon
+
+      - name: Build Linux desktop executable (jpackage)
+        working-directory: upstream
+        run: ./gradlew :desktop:jpackageImage --no-daemon
+
+      - name: Copy upstream source for AppImage build
+        run: cp -r upstream/* . || true
+
+      - name: Build Linux AppImage
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -w /work \
+            archlinux:latest \
+            bash /work/.github/scripts/build-shatteredpd-appimage.sh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: Shattered Pixel Dungeon ${{ env.VERSION }}
+          generate_release_notes: true
+          files: |
+            upstream/desktop/build/libs/*.jar
+            *.AppImage

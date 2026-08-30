@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Shattered Pixel Dungeon
+Comment=Traditional roguelike game with pixel-art graphics and simple interface
+Exec=shatteredpd
+Icon=icon_256
+Type=Application
+Categories=Game;AdventureGame;
+StartupWMClass=shatteredpd
+Terminal=false
