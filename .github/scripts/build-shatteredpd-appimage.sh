@@ -61,6 +61,7 @@ STRACE_BINARY='Shattered Pixel Dungeon' \
 STRACE_TIME=10 \
 DEPLOY_OPENGL=1 \
 DEPLOY_PULSE=1 \
+UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync" \
 ./quick-sharun.sh /usr/lib/shatteredpd
 
 echo "==> [AppImage] Done"
