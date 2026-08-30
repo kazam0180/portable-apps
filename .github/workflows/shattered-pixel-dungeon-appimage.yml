@@ -14,13 +14,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: gradle
-
       - name: Clone upstream Shattered Pixel Dungeon
         run: |
           git clone --depth 1 https://github.com/00-Evan/shattered-pixel-dungeon.git upstream
@@ -32,10 +25,12 @@ jobs:
           echo "VERSION=$(sed -n "s/^[[:space:]]*appVersionName[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" build.gradle)" >> "$GITHUB_ENV"
           echo "TAG_NAME=$LATEST_TAG" >> "$GITHUB_ENV"
 
-      - name: Verify version
-        run: |
-          echo "Building Shattered Pixel Dungeon version: $VERSION"
-          echo "Tag: $TAG_NAME"
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
 
       - name: Build Linux desktop release JAR
         working-directory: upstream
@@ -45,8 +40,9 @@ jobs:
         working-directory: upstream
         run: ./gradlew :desktop:jpackageImage --no-daemon
 
-      - name: Copy upstream source for AppImage build
-        run: cp -r upstream/* . || true
+      - name: Copy upstream artifacts for AppImage build
+        run: |
+          cp -r upstream/* . || true
 
       - name: Build Linux AppImage
         run: |
@@ -59,9 +55,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ env.VERSION }}
+          tag_name: spd-${{ env.VERSION }}
           name: Shattered Pixel Dungeon ${{ env.VERSION }}
-          generate_release_notes: true
+          generate_release_notes: false
           files: |
-            upstream/desktop/build/libs/*.jar
             *.AppImage
+            *.zsync
