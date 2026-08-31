@@ -1,0 +1,57 @@
+name: Kdenlive AppImage
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Kdenlive AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check if Release Already Exists
+        id: check
+        run: |
+          set -euo pipefail
+
+          RELEASE_TAG="kdenlive-$(date +%Y%m%d)"
+          if gh release view "$RELEASE_TAG" --repo ${{ github.repository }} &>/dev/null; then
+            echo "Release $RELEASE_TAG already exists, skipping build"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build AppImage
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE":/work \
+            -w /work \
+            archlinux:latest \
+            bash /work/.github/scripts/build-kdenlive-appimage.sh
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.check.outputs.tag }}
+          name: Kdenlive AppImage ${{ steps.check.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            *.AppImage
+            *.zsync

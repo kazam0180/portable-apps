@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Kdenlive
+GenericName=Video Editor
+Comment=Non-linear video editor
+Exec=kdenlive %F
+Icon=kdenlive
+Type=Application
+Categories=AudioVideo;Video;Timeline;Editor;
+MimeType=application/x-kdenlive;
+Terminal=false
+StartupWMClass=kdenlive
+Keywords=video;editor;timeline;effects;rendering;
