@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eux
+
+# Detect host hardware architecture
+ARCH="$(uname -m)"
+
+# Source URLs for Anylinux packaging tools
+QUICK_SHARUN_URL="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/quick-sharun.sh"
+DEBLOAT_URL="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/get-debloated-pkgs.sh"
+
+# Fetch build helpers
+wget "$DEBLOAT_URL" -O ./get-debloated-pkgs.sh
+chmod +x ./get-debloated-pkgs.sh
+
+wget "$QUICK_SHARUN_URL" -O ./quick-sharun
+chmod +x ./quick-sharun
+
+./get-debloated-pkgs.sh --add-common --prefer-nano
+
+# Environment Configuration
+
+git checkout $latestTag
+
+export APPDIR="$PWD/AppDir"
+export OUTPATH="./dist"
+export OUTNAME="pla-site-tool_${latestTag}-${ARCH}.AppImage"
+export DESKTOP=DUMMY
+export ICON=DUMMY
+export MAIN_BIN=/usr/bin/pla-site-tool
+
+mkdir -p ./AppDir/bin
+
+# Deploy binaries and capture dynamic dependencies
+./quick-sharun /usr/bin/pla-site-tool
+
+# Compile final AppImage using DwarFS and uruntime
+./quick-sharun --make-appimage

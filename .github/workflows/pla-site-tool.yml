@@ -23,24 +23,22 @@ jobs:
       - name: Build
         id: build
         run: |
-          pacman -Syu --noconfirm base-devel wget rustup git tree patchelf strace xorg-server-xvfb musl github-cli
+          pacman -Syu --noconfirm base-devel wget rustup git tree patchelf strace xorg-server-xvfb github-cli
           rustup default stable
-          rustup target add x86_64-unknown-linux-musl
 
           git clone https://gitlab.com/kazam0180/pla-site-tool.git
           cd pla-site-tool
-          cargo build --target x86_64-unknown-linux-musl --release
-          cp target/x86_64-unknown-linux-musl/release/pla-site-tool /usr/bin/
-          sed -i 's|get-debloated-pkgs.sh --prefer-nano|get-debloated-pkgs.sh --add-common --prefer-nano|g' anylinux_appimage
+          cargo build --release
+          cp target/release/pla-site-tool /usr/bin/
+          cp target/release/imgtool /usr/bin/
+          export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          export VERSION=$latestTag
           mkdir -p AppDir
-          export DESKTOP=DUMMY
-          export ICON=DUMMY
-          export MAIN_BIN=/usr/bin/pla-site-tool
-          ./anylinux_appimage
+          ../.github/scripts/pla-site-tool
 
           export latestTag=$(git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null || echo "v0.0.0")
           echo "tag=${latestTag}" >> $GITHUB_OUTPUT
-           
+
           mv dist ../
           rm -rf pla-site-tool
 
